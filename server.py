@@ -1,25 +1,52 @@
-# Imports
 import socket
+import sys
 
-# Creating Listening Port
-
-# host and port
-
-# You can delete here after change HOST
-if HOST == '127.0.0.1':
-    print(f"[!] Don't forget to change default HOST:{HOST} to your HOST:{socket.gethostbyname(socket.gethostname())} in both server and client")
-
-new_port = input('Input Host Port (Blank if default).')
-
-
-server = socket.socket()
-server.bind((HOST, PORT))
-
-# Starting Server
-
-
-
-
-# Reciving Commands
-while True:
+def start_server():
+    # Get host and port from user
     
+
+
+    # Intructions to Display connection information
+    
+
+    try:
+        # Create socket
+        
+        
+        # Allow reuse of address
+        
+        
+        # Bind to host and port
+        
+        
+        # Start listening (max 5 queued connections)
+        
+
+        # Accept incoming connection
+        
+
+        # Receiving commands loop
+        while True:
+            try:
+                # Receive data from client
+                
+                
+                # You can add command processing logic here
+                # For example, execute commands and send back results
+                
+                # Echo back to client (replace this with your command processing)
+                response = f"Server received: {data}"
+                client_socket.send(response.encode('utf-8'))
+                
+            except KeyboardInterrupt:
+                print("\n[*] Server shutdown requested")
+                break
+            except Exception as e:
+                print(f"[-] Error: {e}")
+                break
+
+    except socket.error as e:
+       
+
+if __name__ == "__main__":
+    start_server()

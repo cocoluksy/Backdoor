@@ -24,7 +24,21 @@ def start_server():
 
 
     try:
+<<<<<<< HEAD
         # Bind and listen
+=======
+        # Create socket
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        
+        
+        # Allow reuse of address
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        print("Socket option SO_REUSEADDR is now enabled.")
+        
+        
+        # Bind to host and port
+>>>>>>> 4f57086 (test)
         server_socket.bind((host, port))
         server_socket.listen(5)
         print(f"[+] Server started, listening on {host}:{port}")

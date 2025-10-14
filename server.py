@@ -1,74 +1,73 @@
 import socket
 import sys
+import subprocess
 
 def start_server():
-    # Get host and port from user
-    host = input("Enter the host (e.g., 127.0.0.1 or example.com): ")
-    port = int(input("Enter the port number (e.g 8180): "))
-
-
-    # Intructions to Display connection information
+    """Start a simple TCP command server (for controlled local testing)."""
     
+    host = input("Enter the host (e.g., 127.0.0.1 or localhost): ").strip()
+    port_input = input("Enter the port number (e.g., 8180): ").strip()
+
+    # Validate port
+    try:
+        port = int(port_input)
+        if not (1 <= port <= 65535):
+            print("Invalid port number. Must be between 1 and 65535.")
+            return
+    except ValueError:
+        print("Invalid port number.")
+        return
+
+    # Create socket
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
     try:
-        # Create socket
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
-        
-        
-        # Allow reuse of address
-        server_socket.setsockopt(socket.send.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print("Socket option SO_REUSEADDR is now enabled.")
-        
-        
-        # Bind to host and port
+        # Bind and listen
         server_socket.bind((host, port))
-        
-        # Start listening (max 5 queued connections)
         server_socket.listen(5)
-        print(f"Server listening on {host}:{port}")
+        print(f"[+] Server started, listening on {host}:{port}")
 
-        # Accept incoming connection
+        # Accept a client connection
         client_socket, client_address = server_socket.accept()
-        print(f"Connection established with {client_address}")
-        
-        
+        print(f"[+] Connection established with {client_address}")
 
-        # Receiving commands loop
-        while True:
-            try:
-                # Receive data from client
+        with client_socket:
+            while True:
                 data = client_socket.recv(1024)
-                
-                
-                # You can add command processing logic here
-                command = data.decode('utf-8').strip()
-                if not command:
+                if not data:
+                    print("[-] Client disconnected.")
                     break
+
+                command = data.decode('utf-8').strip()
+                print(f"[>] Received command: {command}")
+
                 if command.lower() == "exit":
-                    print("Client requested disconnection")
-                # For example, execute commands and send back results
+                    print("[*] Client requested disconnection.")
+                    client_socket.send(b"Goodbye!\n")
+                    break
+
+                # Controlled command execution
                 try:
-                    result = subprocess.check_output(command, shell=True, stderr=subproces.STDOUT)
-                except subprocess.CalledprocessError as e:
+                    # Execute only safe commands (example: 'dir' or 'ls')
+                    if command.lower() in ['ls', 'dir', 'whoami', 'pwd']:
+                        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+                    else:
+                        result = b"Command not allowed.\n"
+                except subprocess.CalledProcessError as e:
                     result = e.output or b"Error executing command.\n"
+
                 client_socket.send(result)
-                
-                # Echo back to client (replace this with your command processing)
-                response = f"Server received: {data}"
-                client_socket.send(response.encode('utf-8'))
-                
-            except KeyboardInterrupt:
-                print("\n[*] Server shutdown requested")
-                break
-            except Exception as e:
-                print(f"[-] Error: {e}")
-                break
 
     except socket.error as e:
-        print(f"Socket error: {e}")
-       
+        print(f"[-] Socket error: {e}")
+    except KeyboardInterrupt:
+        print("\n[*] Server shutdown requested.")
+    finally:
+        server_socket.close()
+        print("[*] Server socket closed.")
+
 
 if __name__ == "__main__":
     start_server()

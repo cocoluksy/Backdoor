@@ -8,7 +8,14 @@ def recv_all(sock, timeout=1.0, bufsize=4096):
     This is useful when the server sends multi-chunk responses and doesn't
     close the connection immediately.
     """
-
+    chunks = []
+    sock.settimeout(timeout)
+    try:
+        while True:
+            chunk = sock.recv(bufsize)
+            if not chunk:
+                break
+            chunks.append(chunk)
   
             # If chunk size is smaller than bufsize, likely end of send
             if len(chunk) < bufsize:
@@ -29,12 +36,17 @@ def recv_all(sock, timeout=1.0, bufsize=4096):
 def start_client():
     host = input("Enter server host (e.g., 127.0.0.1): ").strip()
     try:
+        port = int(input("Enter server port (e.g., 8180): "))
         
     except ValueError:
+        print("[-] Invalid port number. Must be an integer.")
         
         return
 
     try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((host, port))
+        print(f"[*] Connected to {host}:{port}")
 
 
       
@@ -55,12 +67,16 @@ def start_client():
                 continue
 
             # Send the command
-            
+            client.sendall(cmd.encode("utf-8"))
 
             # If user wants to exit
-            
+            if cmd.lower() == "exit":
+                print("[*] Closing connection as requested...")
+                break
 
             # Receive response (may be multi-chunk)
+            response = recv_all(client)
+            print("\n--- Server Output ---\n" + response.decode('utf-8', errors='replace') + "\n")
             
     finally:
         try:

